@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>拼豆像素图生成器</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="brand">
+        <div class="logo">豆</div>
+        <div class="brand-text">
+          <span class="eyebrow">Mard 221 色 · 标准拼豆板</span>
+          <h1>拼豆像素图生成器</h1>
+          <p>上传图片，框选范围，生成带色号的高清拼豆图纸。当前版本不保存任何历史记录。</p>
+        </div>
+      </div>
+
+      <nav class="stepper" aria-label="制作步骤">
+        <button class="step-pill active" data-step="1" type="button"><span>1</span>上传设置</button>
+        <button class="step-pill" data-step="2" type="button"><span>2</span>框选图片</button>
+        <button class="step-pill" data-step="3" type="button"><span>3</span>保存结果</button>
+      </nav>
+    </header>
+
+    <section id="step1" class="screen active">
+      <div class="screen-grid setup-grid">
+        <section class="panel upload-panel">
+          <div class="panel-title">
+            <span>01</span>
+            <div>
+              <h2>上传图片</h2>
+              <p>手机可直接从相册选择，图片只在本次生成中使用。</p>
+            </div>
+          </div>
+
+          <label class="upload-box" for="imageInput">
+            <input id="imageInput" type="file" accept="image/*" />
+            <span class="upload-icon">＋</span>
+            <strong id="uploadTitle">点击上传图片</strong>
+            <small id="uploadHint">支持 JPG / PNG / WebP</small>
+          </label>
+
+          <label class="field">
+            图纸名称
+            <input id="titleInput" value="我的拼豆图" maxlength="40" />
+          </label>
+        </section>
+
+        <section class="panel settings-panel">
+          <div class="panel-title">
+            <span>02</span>
+            <div>
+              <h2>选择拼豆板</h2>
+              <p>输出比例会按板数自动锁定，后面框选时不会拉伸图片。</p>
+            </div>
+          </div>
+
+          <div class="preset-row" aria-label="常用图板预设">
+            <button class="preset" data-base="29" data-cols="1" data-rows="1" type="button">1块</button>
+            <button class="preset" data-base="29" data-cols="2" data-rows="1" type="button">2横</button>
+            <button class="preset active" data-base="29" data-cols="2" data-rows="2" type="button">2×2</button>
+            <button class="preset" data-base="29" data-cols="3" data-rows="2" type="button">3×2</button>
+            <button class="preset" data-base="29" data-cols="4" data-rows="3" type="button">4×3</button>
+            <button class="preset" data-base="50" data-cols="1" data-rows="1" type="button">50格</button>
+          </div>
+
+          <div class="form-grid">
+            <label class="field">
+              单板豆数
+              <input id="boardBase" type="number" min="5" max="80" value="29" inputmode="numeric" />
+            </label>
+            <label class="field">
+              横向板数
+              <input id="boardCols" type="number" min="1" max="8" value="2" inputmode="numeric" />
+            </label>
+            <label class="field">
+              纵向板数
+              <input id="boardRows" type="number" min="1" max="8" value="2" inputmode="numeric" />
+            </label>
+            <label class="field">
+              框大小
+              <input id="cropScale" type="range" min="35" max="100" value="90" />
+            </label>
+          </div>
+
+          <div class="size-card">
+            <span>输出尺寸</span>
+            <strong id="sizeText">58 × 58</strong>
+            <small>共 <b id="beadCount">3364</b> 颗豆；粗线为拼豆板边界。</small>
+          </div>
+        </section>
+      </div>
+
+      <footer class="nav-bar">
+        <button class="primary" id="toCropBtn" type="button">下一步：框选图片</button>
+      </footer>
+    </section>
+
+    <section id="step2" class="screen">
+      <section class="panel crop-panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <span>03</span>
+            <div>
+              <h2>框选图片范围</h2>
+              <p>拖动框内移动范围，拖动四角圆点缩放。框选比例会跟随拼豆板比例。</p>
+            </div>
+          </div>
+          <div class="mini-summary" id="cropSummary">58 × 58</div>
+        </div>
+
+        <div class="canvas-wrap">
+          <canvas id="cropCanvas" width="960" height="600"></canvas>
+          <div id="emptyState" class="empty-state">请先上传图片</div>
+        </div>
+      </section>
+
+      <footer class="nav-bar two-actions">
+        <button class="secondary" data-back="1" type="button">返回设置</button>
+        <button class="primary" id="generateBtn" type="button" disabled>生成图纸</button>
+      </footer>
+    </section>
+
+    <section id="step3" class="screen">
+      <section class="panel result-panel">
+        <div class="panel-head result-head">
+          <div class="panel-title">
+            <span>04</span>
+            <div>
+              <h2>保存结果</h2>
+              <p>生成图片和色号矩阵只保存在当前页面，刷新后不会保留。</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="status" class="status">暂无结果</div>
+
+        <div class="result-actions">
+          <button id="saveImageBtn" class="primary hidden" type="button">保存图片</button>
+          <a id="downloadImage" class="secondary hidden" download>下载 PNG</a>
+          <a id="downloadCsv" class="secondary hidden" download>下载 CSV</a>
+          <button id="newImageBtn" class="ghost-button" type="button">重新制作</button>
+        </div>
+
+        <div class="result-view">
+          <img id="resultImage" class="result-img hidden" alt="生成的拼豆图" />
+        </div>
+
+        <div class="legend-block">
+          <div class="legend-title">用色统计</div>
+          <div id="legend" class="legend"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
